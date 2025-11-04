@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Manutenção - Na Roca Web</title>
+
+  <!-- Bibliotecas Externas -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- CSS Central do Sistema V4 -->
+  <link rel="stylesheet" href="Css/style-sidebar-v3.css">
+  <link rel="stylesheet" href="Css/style-geral-v3.css">
+
+  <style>
+    :root {
+      --manutencao-primary: #f59e0b;
+      --manutencao-secondary: #d97706;
+      --manutencao-accent: #fbbf24;
+      --manutencao-danger: #dc2626;
+      --manutencao-warning: #ea580c;
+    }
+
+    .manutencao-header {
+      background: linear-gradient(135deg, var(--manutencao-primary) 0%, var(--manutencao-secondary) 100%);
+      color: white;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-manutencao-primary {
+      background: linear-gradient(135deg, var(--manutencao-primary) 0%, var(--manutencao-secondary) 100%);
+      border: none;
+      color: white;
+      font-weight: 600;
+    }
+
+    .btn-manutencao-primary:hover {
+      background: linear-gradient(135deg, var(--manutencao-secondary) 0%, var(--manutencao-primary) 100%);
+      transform: translateY(-1px);
+      color: white;
+    }
+
+    .card-manutencao {
+      border: none;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+    }
+
+    .documento-card {
+      transition: all 0.2s ease;
+      border-left: 4px solid var(--manutencao-accent);
+    }
+
+    .documento-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.2);
+      border-left-color: var(--manutencao-primary);
+    }
+
+    .badge-tipo-campo {
+      font-size: 0.7rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .campo-readonly {
+      background-color: #f8f9fa;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+
+    .campo-warning {
+      border-left: 3px solid #fd7e14;
+      background-color: #fff8f0;
+    }
+
+    .campo-calculated {
+      border-left: 3px solid #0dcaf0;
+      background-color: #f0fbff;
+    }
+
+    .campo-reference {
+      border-left: 3px solid #6f42c1;
+      background-color: #f8f5ff;
+    }
+
+    .aviso-campo {
+      font-size: 0.8rem;
+      padding: 0.5rem;
+      border-radius: 6px;
+      margin-top: 0.5rem;
+      background-color: #fff3cd;
+      border-left: 3px solid #ffc107;
+    }
+
+    .stats-container {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .stat-badge {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .filtros-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .alert-master {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border-left: 4px solid var(--manutencao-danger);
+      color: #78350f;
+    }
+
+    /* Modal custom */
+    .modal-manutencao .modal-content {
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header-manutencao {
+      background: linear-gradient(135deg, var(--manutencao-primary) 0%, var(--manutencao-secondary) 100%);
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- O Sidebar V4 será injetado aqui dinamicamente pelo js/sidebar.js -->
+
+    <main class="main-content">
+
+      <!-- Cabeçalho Padrão V3 -->
+      <header class="header-padrao">
+        <div class="header-content">
+          <div class="sistema-info">
+            <i class="fas fa-tools" style="color: var(--manutencao-accent);"></i>
+            <div class="sistema-nome">Sistema de Manutenção</div>
+            <span class="modulo-badge" style="background: var(--manutencao-danger);">MASTER</span>
+          </div>
+          <div class="versiculo-central" id="versiculo-container">...</div>
+          <div class="usuario-info">
+            <div class="usuario-details">
+              <div class="usuario-nome" id="usuario-nome">...</div>
+              <div class="empresa-nome" id="empresa-nome">...</div>
+            </div>
+            <div class="usuario-avatar" id="usuario-avatar"></div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Container do Módulo -->
+      <div class="modulo-container">
+
+        <!-- Loading Overlay -->
+        <div id="loading-container" class="loading-overlay" style="display: none;">
+          <div class="loading-content">
+            <div class="spinner-border text-warning mb-3" style="width: 3rem; height: 3rem;" role="status">
+              <span class="visually-hidden">Carregando...</span>
+            </div>
+            <h5 class="text-warning">Processando...</h5>
+          </div>
+        </div>
+
+        <!-- Header do Módulo -->
+        <div class="manutencao-header">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h2 class="mb-2">
+                <i class="fas fa-tools me-2"></i>
+                Manutenção de Documentos
+              </h2>
+              <p class="mb-0 opacity-75">
+                <i class="fas fa-shield-alt me-1"></i>
+                Edição manual com auditoria completa • Acesso exclusivo MASTER
+              </p>
+            </div>
+            <div class="col-md-4 text-end">
+              <a href="dashboard.html" class="btn btn-light">
+                <i class="fas fa-arrow-left me-2"></i>
+                Voltar
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alerta de Segurança -->
+        <div class="alert alert-master">
+          <div class="d-flex align-items-start">
+            <i class="fas fa-exclamation-triangle me-3 mt-1" style="font-size: 1.5rem;"></i>
+            <div>
+              <strong>ATENÇÃO - Sistema de Manutenção Manual</strong>
+              <p class="mb-0 mt-2">
+                Edições manuais podem causar inconsistências nos dados. Use apenas para correções emergenciais.
+                Todas as alterações são registradas em auditoria com gravidade ALTA.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 🔍 FILTROS -->
+        <div class="filtros-card">
+          <h5 class="mb-3">
+            <i class="fas fa-filter me-2 text-warning"></i>
+            Filtros de Busca
+          </h5>
+
+          <div class="row g-3">
+            <!-- Empresa (INFORMATIVO - pega do dashboard) -->
+            <div class="col-md-3">
+              <label class="form-label">
+                <i class="fas fa-building me-1"></i>
+                Empresa Selecionada
+                <span class="badge bg-info ms-2">Informativo</span>
+              </label>
+              <input type="text" class="form-control" id="filtroEmpresa" readonly style="background-color: #f0f9ff; cursor: default;">
+              <small class="text-muted">Empresa selecionada no Dashboard Principal</small>
+            </div>
+
+            <!-- Coleção -->
+            <div class="col-md-3">
+              <label class="form-label">
+                <i class="fas fa-database me-1"></i>
+                Coleção Firestore
+                <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="filtroColecao" required>
+                <option value="">Selecione...</option>
+              </select>
+            </div>
+
+            <!-- Data Início -->
+            <div class="col-md-2">
+              <label class="form-label">
+                <i class="fas fa-calendar-alt me-1"></i>
+                Data Início
+              </label>
+              <input type="date" class="form-control" id="filtroDataInicio">
+            </div>
+
+            <!-- Data Fim -->
+            <div class="col-md-2">
+              <label class="form-label">
+                <i class="fas fa-calendar-check me-1"></i>
+                Data Fim
+              </label>
+              <input type="date" class="form-control" id="filtroDataFim">
+            </div>
+
+            <!-- Botão Buscar -->
+            <div class="col-md-2">
+              <label class="form-label">&nbsp;</label>
+              <button class="btn btn-manutencao-primary w-100" id="btnBuscar">
+                <i class="fas fa-search me-1"></i>
+                Buscar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 📋 LISTA DE DOCUMENTOS -->
+        <div id="lista-documentos">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            Selecione os filtros acima e clique em "Buscar" para listar documentos.
+            <br>
+            <small class="text-muted">Limite: 100 documentos por busca • Ordenação: created_at DESC</small>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- 🔧 MODAL DE EDIÇÃO -->
+  <div class="modal fade modal-manutencao" id="modalEdicao" tabindex="-1" aria-labelledby="modalEdicaoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header modal-header-manutencao">
+          <h5 class="modal-title" id="modalEdicaoLabel">
+            <i class="fas fa-edit me-2"></i>
+            Editar Documento
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="modalEdicaoBody">
+          <!-- Conteúdo gerado dinamicamente -->
+        </div>
+        <div class="modal-footer" id="modalEdicaoFooter">
+          <!-- Botões gerados dinamicamente -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📦 SCRIPTS -->
+
+  <!-- Firebase V9 SDK (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+
+  <!-- Core Sistema -->
+  <script src="firebase-config.js"></script>
+  <script src="Js/sidebar.js"></script>
+  <script src="Js/common-firebase.js"></script>
+  <script src="Js/security-rules.js"></script>
+  <script src="Js/custom-claims-helper.js"></script>
+
+  <!-- Módulos de Manutenção -->
+  <script src="Js/manutencao/validacoes-campos.js"></script>
+  <script src="Js/manutencao/editor-documentos.js"></script>
+
+  <!-- Bootstrap 5 -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- 🚀 INICIALIZAÇÃO -->
+  <script>
+    /**
+     * 👤 OBTER USUÁRIO ATUAL
+     * Função helper para obter dados do usuário logado do localStorage
+     */
+    function getUsuarioAtualLocal() {
+      try {
+        // Tentar ambas as chaves por compatibilidade
+        let usuarioSalvo = localStorage.getItem('usuario_atual') || localStorage.getItem('webbat_usuario');
+        if (usuarioSalvo) {
+          const usuario = JSON.parse(usuarioSalvo);
+          console.log('👤 [Manutenção] Usuário obtido do localStorage:', usuario);
+          return usuario;
+        }
+      } catch (error) {
+        console.error('❌ [Manutenção] Erro ao obter usuário atual:', error);
+      }
+      return {};
+    }
+
+    // Expor globalmente se não existir
+    if (!window.getUsuarioAtual) {
+      window.getUsuarioAtual = getUsuarioAtualLocal;
+    }
+    // NÃO sobrescrever window.getEmpresaAtual - já existe em common-firebase.js!
+
+    /**
+     * 🏢 EXIBIR EMPRESA ATUAL (DO DASHBOARD)
+     * Usa window.getDetalhesEmpresaAtual() do common-firebase.js
+     */
+    async function exibirEmpresaAtual() {
+      try {
+        // Pegar ID da empresa (window.getEmpresaAtual já existe no common-firebase.js)
+        const empresaId = window.getEmpresaAtual();
+
+        if (!empresaId || empresaId === 'empresa_demo') {
+          console.error('❌ [Manutenção] Empresa não selecionada no Dashboard');
+          alert('❌ Nenhuma empresa selecionada!\n\nPor favor, volte ao Dashboard e selecione uma empresa.');
+          window.location.href = 'dashboard.html';
+          return null;
+        }
+
+        console.log('🏢 [Manutenção] Empresa ID obtido:', empresaId);
+
+        // Pegar detalhes completos (window.getDetalhesEmpresaAtual já existe no common-firebase.js)
+        const detalhesEmpresa = await window.getDetalhesEmpresaAtual();
+
+        // Exibir no campo informativo
+        const inputEmpresa = document.getElementById('filtroEmpresa');
+        const nomeEmpresa = detalhesEmpresa?.nome_empresa ||
+                           detalhesEmpresa?.fantasia ||
+                           'Empresa';
+        inputEmpresa.value = `${nomeEmpresa} (ID: ${empresaId})`;
+
+        console.log('✅ [Manutenção] Empresa exibida:', nomeEmpresa, '-', empresaId);
+        return { id: empresaId, ...detalhesEmpresa };
+
+      } catch (error) {
+        console.error('❌ [Manutenção] Erro ao exibir empresa:', error);
+        return null;
+      }
+    }
+
+    /**
+     * 🗂️ CARREGAR COLEÇÕES PERMITIDAS
+     */
+    function carregarColecoes() {
+      const selectColecao = document.getElementById('filtroColecao');
+      selectColecao.innerHTML = '<option value="">Selecione uma coleção...</option>' +
+        ColecoesConfig.permitidas.map(col =>
+          `<option value="${col.id}">${col.icon} ${col.nome}</option>`
+        ).join('');
+    }
+
+    /**
+     * 🔍 EXECUTAR BUSCA
+     */
+    async function executarBusca() {
+      try {
+        // 1. Obter empresa atual do Dashboard (window.getEmpresaAtual retorna ID string)
+        const empresaId = window.getEmpresaAtual();
+
+        if (!empresaId || empresaId === 'empresa_demo') {
+          alert('❌ Nenhuma empresa selecionada!\n\nPor favor, volte ao Dashboard e selecione uma empresa primeiro.');
+          window.location.href = 'dashboard.html';
+          return;
+        }
+
+        console.log('🔍 [Manutenção] Buscando documentos para empresa:', empresaId);
+
+        // 2. Validar coleção
+        const colecao = document.getElementById('filtroColecao').value;
+
+        if (!colecao) {
+          alert('⚠️ Por favor, selecione uma Coleção!');
+          return;
+        }
+
+        // Datas (opcionais)
+        const dataInicioStr = document.getElementById('filtroDataInicio').value;
+        const dataFimStr = document.getElementById('filtroDataFim').value;
+
+        const dataInicio = dataInicioStr ? new Date(dataInicioStr + 'T00:00:00') : null;
+        const dataFim = dataFimStr ? new Date(dataFimStr + 'T23:59:59') : null;
+
+        // Mostrar loading
+        document.getElementById('lista-documentos').innerHTML = `
+          <div class="text-center p-5">
+            <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem;">
+              <span class="visually-hidden">Carregando...</span>
+            </div>
+            <p class="mt-3 text-muted">Buscando documentos...</p>
+          </div>
+        `;
+
+        // Buscar documentos
+        const documentos = await buscarDocumentos(empresaId, colecao, dataInicio, dataFim);
+
+        // Renderizar lista
+        renderizarListaDocumentos(documentos, colecao);
+
+      } catch (error) {
+        console.error('❌ [Manutenção] Erro na busca:', error);
+        document.getElementById('lista-documentos').innerHTML = `
+          <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <strong>Erro ao buscar documentos:</strong> ${error.message}
+          </div>
+        `;
+      }
+    }
+
+    /**
+     * 🚀 INICIAR SISTEMA
+     */
+    async function inicializarSistema() {
+      try {
+        console.log('🚀 [Manutenção] Iniciando sistema...');
+
+        // 1. Obter usuário atual (gerenciado por common-firebase.js)
+        const usuarioAtual = window.getUsuarioAtual();
+        console.log('👤 Usuário atual:', usuarioAtual);
+
+        // 2. Verificar permissão MASTER
+        const isMaster = usuarioAtual.permissao === 'master' ||
+                        usuarioAtual.permissao === 'total' ||
+                        usuarioAtual.email === 'infolino@gmail.com' ||
+                        usuarioAtual.dono_sistema === true;
+
+        if (!isMaster) {
+          alert('🚫 ACESSO NEGADO!\n\nApenas usuários MASTER/TOTAL podem acessar o Sistema de Manutenção.\n\nRedirecionando para Dashboard...');
+          window.location.href = 'dashboard.html';
+          return;
+        }
+
+        console.log('👑 USUÁRIO MASTER DETECTADO - Acesso total ao sistema');
+
+        // 3. Inicializar página padrão V3 (header, sidebar, etc)
+        await inicializarPaginaPadraoV3();
+
+        // 4. Marcar página ativa no sidebar
+        if (window.Sidebar) {
+          window.Sidebar.marcarPaginaAtiva('manutencao.html');
+        }
+
+        // 5. Exibir empresa atual e carregar coleções
+        await exibirEmpresaAtual();  // Agora é async!
+        carregarColecoes();
+
+        // 6. Adicionar evento ao botão buscar
+        document.getElementById('btnBuscar').addEventListener('click', executarBusca);
+
+        console.log('✅ [Manutenção] Sistema inicializado com sucesso!');
+
+      } catch (error) {
+        console.error('❌ [Manutenção] Erro ao iniciar:', error);
+        alert('Erro ao iniciar sistema: ' + error.message);
+      }
+    }
+
+    // ⏰ AGUARDAR FIREBASE READY
+    window.addEventListener('firebase-ready', function() {
+      setTimeout(() => {
+        inicializarSistema();
+      }, 500);
+    });
+  </script>
+
+</body>
+
+</html>
